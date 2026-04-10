@@ -4,32 +4,63 @@
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
 #    By: peda-cos <peda-cos@student.42sp.org.br>    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/11/15 07:27:03 by peda-cos          #+#    #+#              #
-#    Updated: 2024/12/24 16:15:33 by peda-cos         ###   ########.fr        #
+#                                                 +#+#+#+#+#+   +#+             #
+#    Created: 2026/04/10 00:00:00 by peda-cos          #+#    #+#              #
+#    Updated: 2026/04/10 00:00:00 by peda-cos         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = pipex
-CC = cc
-CFLAGS = -Wall -Wextra -Werror
-SRCS = main.c exec_utils.c ft_split.c path_utils.c str_utils.c
-OBJS = $(SRCS:.c=.o)
+NAME        = pipex
+CC          = cc
+CFLAGS      = -Wall -Wextra -Werror
+INC         = -I include -I libft
+LIBFT_DIR   = libft
+LIBFT       = $(LIBFT_DIR)/libft.a
+
+SRCS        = src/pipex.c \
+              src/children.c \
+              src/path.c \
+              src/error.c
+
+BONUS_SRCS  = bonus/pipex_bonus.c \
+              bonus/children_bonus.c \
+              bonus/heredoc_bonus.c \
+              bonus/path_bonus.c \
+              bonus/error_bonus.c
+
+OBJS        = $(SRCS:.c=.o)
+BONUS_OBJS  = $(BONUS_SRCS:.c=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+$(LIBFT):
+	@make -C $(LIBFT_DIR)
 
-%.o: %.c includes/pipex.h
-	$(CC) $(CFLAGS) -c $< -o $@
+$(NAME): $(LIBFT) $(OBJS)
+	@$(CC) $(CFLAGS) $(OBJS) $(LIBFT) -o $(NAME)
+	@echo "Compiled: $(NAME)"
+
+%.o: %.c
+	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
+	@echo "Compiling: $<"
+
+bonus: .bonus
+
+.bonus: $(LIBFT) $(BONUS_OBJS)
+	@$(CC) $(CFLAGS) $(BONUS_OBJS) $(LIBFT) -o $(NAME)
+	@echo "Compiled: $(NAME) (bonus)"
+	@touch .bonus
 
 clean:
-	rm -f $(OBJS)
+	@rm -f $(OBJS) $(BONUS_OBJS)
+	@make -C $(LIBFT_DIR) clean
+	@echo "Cleaned: objects"
 
 fclean: clean
-	rm -f $(NAME)
+	@rm -f $(NAME) .bonus
+	@make -C $(LIBFT_DIR) fclean
+	@echo "Cleaned: $(NAME)"
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re bonus

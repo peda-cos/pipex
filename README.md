@@ -1,263 +1,82 @@
-# Pipex
+*This project has been created as part of the 42 curriculum by peda-cos.*
 
-A 42 School project that recreates the behavior of shell pipe (`|`) mechanism in C, allowing the execution of two commands in a pipeline, redirecting input and output through files.
+# pipex
 
-## 📋 Description
+## Description
 
-Pipex is a system programming project that mimics the shell pipeline functionality. It executes two commands sequentially, where the output of the first command serves as input to the second command, with file-based input and output redirection.
+**pipex** reproduces the behavior of UNIX shell pipes in C. Given two commands and two files, it replicates the shell construct:
 
-The program replicates this shell behavior:
-```bash
+```sh
 < file1 cmd1 | cmd2 > file2
 ```
 
-## 🚀 Technology Stack
+The program forks child processes, connects them via a pipe, redirects file descriptors with `dup2`, and uses `execve` to execute the commands — mirroring how a real shell manages pipelines.
 
-- **Language**: C
-- **Compiler**: cc (GCC/Clang compatible)
-- **Build System**: Make
-- **Coding Standard**: Norminette (42 School norm)
-- **System APIs**:
-  - Process management: `fork()`, `execve()`, `waitpid()`
-  - File descriptors: `open()`, `close()`, `dup2()`
-  - Inter-process communication: `pipe()`
-  - File access: `access()`
+The bonus extends this to support **multiple pipes** (`cmd1 | cmd2 | ... | cmdn`) and **here documents** (`<<` input with `>>` append output).
 
-## 🏗️ Project Architecture
+## Instructions
 
-The project follows a modular architecture with clear separation of concerns:
+### Compilation
 
-```
-┌─────────────┐
-│   main.c    │  ← Entry point & argument validation
-└──────┬──────┘
-       │
-       ├──────→ ┌──────────────┐
-       │        │  exec_utils  │  ← Process creation & execution
-       │        └──────────────┘
-       │
-       ├──────→ ┌──────────────┐
-       │        │  path_utils  │  ← Command path resolution
-       │        └──────────────┘
-       │
-       └──────→ ┌──────────────┐
-                │  str_utils   │  ← String manipulation utilities
-                │  ft_split    │
-                └──────────────┘
-```
-
-### Core Components:
-
-1. **Main Module** (`main.c`): Handles argument parsing, file opening, and orchestrates the pipeline creation
-2. **Execution Module** (`exec_utils.c`): Manages process forking, command execution, and pipe creation
-3. **Path Resolution** (`path_utils.c`): Locates executable commands in the system PATH
-4. **String Utilities** (`str_utils.c`, `ft_split.c`): Provides helper functions for string operations and command parsing
-
-## 📁 Project Structure
-
-```
-Pipex/
-├── main.c              # Entry point and file handling
-├── exec_utils.c        # Process execution and pipe management
-├── path_utils.c        # Command path resolution
-├── str_utils.c         # String utility functions
-├── ft_split.c          # String splitting implementation
-├── pipex.h             # Header file with function prototypes
-├── Makefile            # Build configuration
-├── LICENSE             # MIT License
-└── .github/
-    ├── workflows/
-       └── main.yml    # CI/CD for Norminette validation
-```
-
-## 🎯 Key Features
-
-- **Pipeline Execution**: Implements shell-like pipe mechanism between two commands
-- **File Redirection**: Reads input from a file and writes output to another file
-- **Command Path Resolution**: Automatically locates executables using the system PATH
-- **Robust Error Handling**: Comprehensive error checking for file operations, process creation, and command execution
-- **Memory Management**: Proper cleanup and memory deallocation
-- **42 Norm Compliance**: Strictly follows 42 School coding standards
-
-## 🛠️ Getting Started
-
-### Prerequisites
-
-- GCC or Clang compiler
-- Make build system
-- Unix-like operating system (Linux, macOS)
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/peda-cos/Pipex.git
-cd Pipex
-```
-
-2. Compile the project:
-```bash
+```sh
+# Mandatory (2-command pipeline)
 make
+
+# Bonus (multiple pipes + here_doc)
+make bonus
+
+# Clean object files
+make clean
+
+# Full clean (objects + binary)
+make fclean
+
+# Rebuild
+make re
 ```
 
-This will generate the `pipex` executable.
+### Execution
 
-### Usage
-
-```bash
+**Mandatory:**
+```sh
 ./pipex file1 cmd1 cmd2 file2
+# Equivalent to: < file1 cmd1 | cmd2 > file2
 ```
 
-**Parameters:**
-- `file1`: Input file to read from
-- `cmd1`: First command to execute
-- `cmd2`: Second command to execute
-- `file2`: Output file to write to
-
-**Example:**
-
-```bash
+**Examples:**
+```sh
 ./pipex infile "ls -l" "wc -l" outfile
+./pipex infile "grep hello" "wc -w" outfile
+./pipex /dev/stdin "cat" "sort" outfile
 ```
 
-This is equivalent to:
-```bash
-< infile ls -l | wc -l > outfile
+**Bonus — multiple pipes:**
+```sh
+./pipex file1 cmd1 cmd2 cmd3 ... cmdn file2
+# Equivalent to: < file1 cmd1 | cmd2 | cmd3 | ... | cmdn > file2
 ```
 
-### Example Use Cases
-
-1. **Count lines in a file after grep:**
-```bash
-./pipex input.txt "grep pattern" "wc -l" output.txt
+**Bonus — here document:**
+```sh
+./pipex here_doc LIMITER cmd1 cmd2 file
+# Equivalent to: cmd1 << LIMITER | cmd2 >> file
 ```
 
-2. **Sort and get unique entries:**
-```bash
-./pipex data.txt "sort" "uniq" result.txt
-```
+## Resources
 
-3. **Search and format output:**
-```bash
-./pipex file.txt "cat" "tr 'a-z' 'A-Z'" uppercase.txt
-```
+### Documentation & References
 
-## 🧪 Development Workflow
+- [pipe(2) man page](https://man7.org/linux/man-pages/man2/pipe.2.html) — creating anonymous pipes between processes
+- [fork(2) man page](https://man7.org/linux/man-pages/man2/fork.2.html) — creating child processes
+- [execve(2) man page](https://man7.org/linux/man-pages/man2/execve.2.html) — executing programs
+- [dup2(2) man page](https://man7.org/linux/man-pages/man2/dup2.2.html) — duplicating file descriptors
+- [waitpid(2) man page](https://man7.org/linux/man-pages/man2/waitpid.2.html) — waiting for child processes
+- *The Linux Programming Interface* by Michael Kerrisk — chapters on processes, pipes, and file I/O
 
-### Building
+### AI Usage
 
-- `make` or `make all`: Compile the project
-- `make clean`: Remove object files
-- `make fclean`: Remove object files and executable
-- `make re`: Recompile the entire project
+AI assistance (Claude via OpenCode) was used for:
 
-### Coding Standards
+- **Project planning**: generating a structured task breakdown and design document covering architecture decisions (process model, error handling strategy, here_doc implementation approach)
+- **Test case design**: suggesting edge cases including missing infile, command not found, permission denied, and multi-pipe bonus scenarios
 
-The project strictly adheres to the **42 School Norminette** standards:
-
-- **Functions**: Maximum 25 lines per function
-- **Line Length**: Maximum 80 characters per line
-- **Function Parameters**: Maximum 4 parameters per function
-- **Variables**: Declaration at the beginning of functions
-- **Naming Conventions**:
-  - Functions: `snake_case`
-  - Variables: `snake_case`
-  - Constants: No specific requirement
-- **Header Protection**: All header files use include guards
-- **Forbidden**: `for` loops, ternary operators in certain contexts, and other norm-specific restrictions
-
-### Code Style
-
-- Consistent indentation using tabs
-- Proper function and variable naming
-- Comprehensive error handling
-- Clear separation of concerns
-- Memory leak prevention with proper cleanup
-
-## 🧪 Testing
-
-The project uses automated Norminette validation through GitHub Actions to ensure code compliance with 42 School standards.
-
-### Manual Testing
-
-Test the program with various scenarios:
-
-1. **Valid input:**
-```bash
-./pipex infile "cat" "wc -l" outfile
-```
-
-2. **Non-existent input file:**
-```bash
-./pipex nonexistent "cat" "wc -l" outfile
-```
-
-3. **Invalid commands:**
-```bash
-./pipex infile "invalidcmd" "wc -l" outfile
-```
-
-4. **Permission errors:**
-```bash
-./pipex /etc/shadow "cat" "wc -l" outfile
-```
-
-### Continuous Integration
-
-The project includes a GitHub Actions workflow that automatically runs Norminette on every push and pull request:
-
-- Validates all `.c` and `.h` files
-- Ensures compliance with 42 coding standards
-- Provides immediate feedback on norm violations
-
-## 🤝 Contributing
-
-Contributions are welcome! To contribute to this project:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
-3. **Follow the coding standards**: Ensure your code passes Norminette validation
-4. **Test thoroughly**: Verify your changes work as expected
-5. **Commit your changes**: `git commit -m 'Add some feature'`
-6. **Push to the branch**: `git push origin feature/your-feature-name`
-7. **Open a Pull Request**
-
-### Code Quality Guidelines
-
-- All code must pass Norminette validation
-- Functions should be concise and single-purpose
-- Include proper error handling
-- Avoid memory leaks
-- Use meaningful variable and function names
-- Comment complex logic where necessary
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 Pedro Monteiro
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
-
-## 👨‍💻 Author
-
-**Pedro Monteiro** (peda-cos)
-- 42 Intra: peda-cos
-- GitHub: [@peda-cos](https://github.com/peda-cos)
-- School: 42 São Paulo
-
-## 🙏 Acknowledgments
-
-- [42 School](https://www.42sp.org.br/) for the project subject and learning methodology
-- The 42 community for support and code reviews
-- Contributors and testers who helped improve this project
-
----
-
-*This project is part of the 42 School curriculum, focusing on Unix system programming, process management, and inter-process communication.*
